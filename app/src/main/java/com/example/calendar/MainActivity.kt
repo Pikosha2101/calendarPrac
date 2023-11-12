@@ -6,7 +6,6 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.CalendarView
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
 
@@ -14,21 +13,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var calendarView: CalendarView
     private val friendBirthday = Calendar.getInstance()
     private val NORMAL_CHANNEL = "NORMAL_CHANNEL"
+    private val eventDates: List<Calendar> = listOf(
+        Calendar.getInstance().apply { set(2004, Calendar.JANUARY, 21) },
+        Calendar.getInstance().apply { set(2004, Calendar.MARCH, 4) },
+        Calendar.getInstance().apply { set(2003, Calendar.NOVEMBER, 16) },
+    )
+    private lateinit var notificationManager : NotificationManager
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        //friendBirthday.set(2004, Calendar.MARCH, 4)
-        friendBirthday.set(2004, Calendar.JANUARY, 21)
+        notificationManager = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         calendarView = findViewById(R.id.calendarView)
 
-        calendarView.setOnDateChangeListener { _, _, month, dayOfMonth ->
-            if (dayOfMonth == friendBirthday.get(Calendar.DATE)
-                && month == friendBirthday.get(Calendar.MONTH)){
+        calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            friendBirthday.set(year, month, dayOfMonth)
+
+            if (eventDates.any {it.get(Calendar.MONTH) == month && it.get(Calendar.DATE) == dayOfMonth}){
                 createNotification()
-                Toast.makeText(this, "TExt", Toast.LENGTH_SHORT).show()
+            } else {
+                deleteNotification()
             }
         }
     }
@@ -36,8 +41,6 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun createNotification() {
-        val notificationManager = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         val channel = NotificationChannel(
             NORMAL_CHANNEL,
             resources.getString(R.string.NOT_IMPORTANT_CHANNEL_NAME),
@@ -57,5 +60,11 @@ class MainActivity : AppCompatActivity() {
             R.id.SIMPLE_NOTIFICATION_ID,
             notification
         )
+    }
+
+
+
+    private fun deleteNotification(){
+        notificationManager.cancel(R.id.SIMPLE_NOTIFICATION_ID)
     }
 }
